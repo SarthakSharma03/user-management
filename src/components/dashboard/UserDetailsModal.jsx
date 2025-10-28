@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RxCross1 } from "react-icons/rx";
-import { FaEye, FaEyeSlash, FaCopy, FaUser, FaEnvelope, FaPhone, FaBuilding, FaKey, FaCalendar } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaPhone, FaBuilding, FaKey, FaCalendar } from 'react-icons/fa';
 
 const UserDetailsModal = ({ isOpen, onClose, user }) => {
   const [showPassword, setShowPassword] = useState(false);

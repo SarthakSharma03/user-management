@@ -1,26 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaPhone, FaBuilding, FaKey, FaCalendar, FaSignOutAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import ChangePasswordModal from "../components/dashboard/ChangePasswordModal";
+import {
+  FaUser,FaEnvelope,FaPhone,FaBuilding,FaKey,FaCalendar,FaSignOutAlt,FaEye,FaEyeSlash,} from "react-icons/fa";
 import { FaUsersCog } from "react-icons/fa";
-
 
 const UserDetail = ({ user, onSignOut }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [userPassword, setUserPassword] = useState('');
+  const [userPassword, setUserPassword] = useState("");
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
-     
-      const passwords = JSON.parse(localStorage.getItem('userPasswords') || '{}');
-      setUserPassword(passwords[user.email] || 'No password set');
+      const passwords = JSON.parse(
+        localStorage.getItem("userPasswords") || "{}"
+      );
+      setUserPassword(passwords[user.email] || "No password set");
     }
   }, [user]);
-
 
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">User Not Found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            User Not Found
+          </h1>
           <p className="text-gray-600">Please login again.</p>
         </div>
       </div>
@@ -33,13 +37,13 @@ const UserDetail = ({ user, onSignOut }) => {
         {/* Header */}
         <div className="bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl p-6 border border-white/20 mb-8">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <FaUsersCog 
+                <FaUsersCog
                   className="w-12 h-12 rounded-lg object-cover text-white"
                   onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'block';
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "block";
                   }}
                 />
                 <span className="text-2xl font-bold text-white hidden">
@@ -47,7 +51,9 @@ const UserDetail = ({ user, onSignOut }) => {
                 </span>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}!</h1>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Welcome, {user.name}!
+                </h1>
                 <p className="text-gray-600">Your Account Details</p>
               </div>
             </div>
@@ -66,13 +72,17 @@ const UserDetail = ({ user, onSignOut }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column */}
             <div className="space-y-6">
-              <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
                   <FaUser className="text-indigo-600 w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Full Name</label>
-                  <span className="text-xl font-semibold text-gray-900">{user.name}</span>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Full Name
+                  </label>
+                  <span className="text-xl font-semibold text-gray-900">
+                    {user.name}
+                  </span>
                 </div>
               </div>
 
@@ -81,8 +91,12 @@ const UserDetail = ({ user, onSignOut }) => {
                   <FaEnvelope className="text-indigo-600 w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Email Address</label>
-                  <span className="text-xl font-semibold text-gray-900">{user.email}</span>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Email Address
+                  </label>
+                  <span className="text-xl font-semibold text-gray-900">
+                    {user.email}
+                  </span>
                 </div>
               </div>
 
@@ -92,8 +106,12 @@ const UserDetail = ({ user, onSignOut }) => {
                     <FaPhone className="text-indigo-600 w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Phone Number</label>
-                    <span className="text-xl font-semibold text-gray-900">{user.phone}</span>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      Phone Number
+                    </label>
+                    <span className="text-xl font-semibold text-gray-900">
+                      {user.phone}
+                    </span>
                   </div>
                 </div>
               )}
@@ -106,7 +124,9 @@ const UserDetail = ({ user, onSignOut }) => {
                   <FaBuilding className="text-indigo-600 w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Role</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Role
+                  </label>
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 capitalize">
                     {user.role}
                   </span>
@@ -119,8 +139,12 @@ const UserDetail = ({ user, onSignOut }) => {
                     <FaBuilding className="text-indigo-600 w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Department</label>
-                    <span className="text-xl font-semibold text-gray-900">{user.department}</span>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                      Department
+                    </label>
+                    <span className="text-xl font-semibold text-gray-900">
+                      {user.department}
+                    </span>
                   </div>
                 </div>
               )}
@@ -130,7 +154,9 @@ const UserDetail = ({ user, onSignOut }) => {
                   <FaCalendar className="text-indigo-600 w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Account Created</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Account Created
+                  </label>
                   <span className="text-xl font-semibold text-gray-900">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </span>
@@ -146,10 +172,12 @@ const UserDetail = ({ user, onSignOut }) => {
                 <FaKey className="text-indigo-600 w-6 h-6" />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-500 mb-2">Your Password</label>
+                <label className="block text-sm font-medium text-gray-500 mb-2">
+                  Your Password
+                </label>
                 <div className="flex-1 relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={userPassword}
                     readOnly
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50"
@@ -159,14 +187,32 @@ const UserDetail = ({ user, onSignOut }) => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600"
                   >
-                    {showPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <FaEyeSlash className="w-4 h-4" />
+                    ) : (
+                      <FaEye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
             </div>
           </div>
+            {/* change-Password Section */}
+          <div className="flex justify-end pt-1.5" >
+            <button
+              onClick={() => setIsChangePasswordOpen(true)}
+              className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-indigo-100 transform hover:scale-105 transition-all duration-200">
+              change password
+            </button>
+          </div>
         </div>
       </div>
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        userEmail={user?.email}
+        onPasswordChange={(newPwd) => setUserPassword(newPwd)}
+      />
     </div>
   );
 };

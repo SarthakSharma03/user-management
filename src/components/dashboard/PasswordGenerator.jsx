@@ -3,7 +3,7 @@ import { FaKey, FaCopy } from "react-icons/fa";
 
 const PasswordGenerator = ({ onPasswordGenerate }) => {
   const [password, setPassword] = useState("");
-  const [copied, setCopied] = useState(false);
+ 
 
   const generatePassword = (length = 12) => {
     const charset =
@@ -28,13 +28,7 @@ const PasswordGenerator = ({ onPasswordGenerate }) => {
     }
   };
 
-  const copyToClipboard = () => {
-    if (password) {
-      navigator.clipboard.writeText(password);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+ 
 
   return (
     <div className="mt-4">
@@ -50,16 +44,7 @@ const PasswordGenerator = ({ onPasswordGenerate }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             placeholder="Generated password will appear here"
           />
-          {password && (
-            <button
-              type="button"
-              onClick={copyToClipboard}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600"
-              title="Copy to clipboard"
-            >
-              <FaCopy className={copied ? "text-green-500" : ""} />
-            </button>
-          )}
+        
         </div>
         <button
           type="button"
