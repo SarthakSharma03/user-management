@@ -1,0 +1,15 @@
+{
+  "name": "user-manager-server",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node --env-file=.env server.js",
+    "dev": "node  --env-file=.env --watch server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
+  }
+}
