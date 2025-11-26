@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ChangePasswordModal from "../components/dashboard/ChangePasswordModal";
-import Api from "../services/Api";
+import Api from "../services/Api.js";
 import {
   FaUser,FaEnvelope,FaPhone,FaBuilding,FaKey,FaCalendar,FaSignOutAlt,FaEye,FaEyeSlash,} from "react-icons/fa";
 import { FaUsersCog } from "react-icons/fa";

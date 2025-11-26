@@ -5,7 +5,7 @@ import DashboardHeader from '../components/dashboard/DashboardHeader';
 import UserCard from '../components/dashboard/UserCard';
 import UserListItem from '../components/dashboard/UserListItem';
 import StatsSection from '../components/dashboard/StatsSection';
-import Api from '../services/Api';
+import Api from '../services/Api.js';
 
 const Dashboard = ({ userInfo, onSignOut }) => {
   const [users, setUsers] = useState([]);
@@ -16,19 +16,46 @@ const Dashboard = ({ userInfo, onSignOut }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [loading, setLoading] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [searchTimeout, setSearchTimeout] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    loadUsers();
+    const params = new URLSearchParams(window.location.search);
+    const initialPage = parseInt(params.get('page') || '1', 10) || 1;
+    setPage(initialPage);
   }, []);
 
-  const loadUsers = async () => {
+  useEffect(() => {
+    const fetchAllUsers = async () => {
+      try {
+        const response = await Api.getAllUsers();
+        setAllUsers(response.data || []);
+      } catch (error) {
+        console.error('Error fetching all users for stats:', error);
+      }
+    };
+    fetchAllUsers();
+  }, []);
+
+  useEffect(() => {
+    loadUsers(page);
+  }, [page]);
+
+  const loadUsers = async (currentPage = 1) => {
     try {
       setLoading(true);
-      const response = await Api.getAllUsers();
-      // Filter out admin users from the list
-      const allUsers = response.data || [];
-      const nonAdminUsers = allUsers.filter(user => user.role !== 'admin');
-      setUsers(nonAdminUsers);
+      const response = await Api.getUserByName(searchTerm || '', currentPage, 3);
+      const usersData = response.data || [];
+      const pagination = response.pagination || { totalPages: 1 };
+      setTotalPages(pagination.totalPages || 1);
+      // Keep allUsers as the full list for stats; fetch once separately
+      setUsers(usersData);
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', String(currentPage));
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState({}, '', newUrl);
     } catch (error) {
       console.error('Error loading users:', error);
       const errorMessage = error.message || 'Failed to load users. Please try again.';
@@ -41,15 +68,65 @@ const Dashboard = ({ userInfo, onSignOut }) => {
       setLoading(false);
     }
   };
-  
 
+  const handleSearch = async (term) => {
+    // Reset to page 1 on new search
+    setPage(1);
+    
+    setLoading(true);
+    try {
+      const response = await Api.getUserByName(term, 1, 3);
+      setUsers(response.data || []);
+      const pagination = response.pagination || { totalPages: 1 };
+      setTotalPages(pagination.totalPages || 1);
+      const params = new URLSearchParams(window.location.search);
+      params.set('page', '1');
+      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      // Don't show error for empty results, just set empty array
+      if (!error.response || error.response.status !== 404) {
+        alert('Error searching users. Please try again.');
+      } else {
+        setUsers([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle search term changes with debounce
+  
+    const onSearchChange =(newSearchTerm)=>{
+      setSearchTerm(newSearchTerm);
+    
+    if(searchTimeout){
+      clearTimeout(searchTimeout);
+    }
+       const timeout = setTimeout(() => {
+      handleSearch(newSearchTerm);
+    }, 800);
+    setSearchTimeout(timeout);
+  };
+  
  
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
 
   const addUser = async (user) => {
     try {
       setLoading(true);
       await Api.createUser(user);
-      await loadUsers(); // Reload users from API
+      await loadUsers(page); 
+      try {
+        const resAll = await Api.getAllUsers();
+        setAllUsers(resAll.data || []);
+      } catch {}
       setIsModalOpen(false);
       alert(`User ${user.name} has been added successfully!`);
     } catch (error) {
@@ -65,18 +142,43 @@ const Dashboard = ({ userInfo, onSignOut }) => {
   const updateUser = async (updatedUser) => {
     try {
       setLoading(true);
-      // Separate password if provided (it will be handled separately)
-      const userData = { ...updatedUser };
-      delete userData.password;
+      // Create a clean user object without any undefined or empty values
+      const userData = {};
       
-      await Api.updateUser(updatedUser.id, userData);
-      await loadUsers(); // Reload users from API
+      // Only include fields that have values to avoid sending empty strings to the backend
+      if (updatedUser.name) userData.name = updatedUser.name;
+      if (updatedUser.email) userData.email = updatedUser.email;
+      if (updatedUser.role) userData.role = updatedUser.role;
+      if (updatedUser.phone) userData.phone = updatedUser.phone;
+      if (updatedUser.department) userData.department = updatedUser.department;
+      
+      // Make the API call
+      const response = await Api.updateUser(updatedUser.id, userData);
+      
+      // Update the local state immediately for better UX
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === updatedUser.id ? { ...user, ...userData } : user
+        )
+      );
+      
+      // Also update the allUsers state to keep search results in sync
+      setAllUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === updatedUser.id ? { ...user, ...userData } : user
+        )
+      );
+      
       setIsModalOpen(false);
       setEditingUser(null);
+      
+      // Show success message
       alert(`User ${updatedUser.name} has been updated successfully!`);
     } catch (error) {
-      alert(error.message || 'Failed to update user. Please try again.');
       console.error('Error updating user:', error);
+      const errorMessage = error.message || 'Failed to update user. Please try again.';
+      alert(errorMessage);
+      throw error; // Re-throw to prevent modal from closing on error
     } finally {
       setLoading(false);
     }
@@ -96,7 +198,11 @@ const Dashboard = ({ userInfo, onSignOut }) => {
 
       setLoading(true);
       await Api.deleteUser(userId);
-      await loadUsers(); // Reload users from API
+      await loadUsers(page); // Reload users from API
+      try {
+        const resAll = await Api.getAllUsers();
+        setAllUsers(resAll.data || []);
+      } catch {}
       alert(`User ${userToDelete.name} has been deleted successfully!`);
     } catch (error) {
       alert(error.message || 'Failed to delete user. Please try again.');
@@ -115,16 +221,7 @@ const Dashboard = ({ userInfo, onSignOut }) => {
     setIsDetailsModalOpen(true);
   };
 
-
-  const filteredUsers = users.filter(user => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      user.name.toLowerCase().includes(searchLower) ||
-      user.email.toLowerCase().includes(searchLower) ||
-      user.role.toLowerCase().includes(searchLower) ||
-      (user.department && user.department.toLowerCase().includes(searchLower))
-    );
-  });
+  const filteredUsers = users; // No client-side filtering needed as it's handled server-side
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -134,7 +231,7 @@ const Dashboard = ({ userInfo, onSignOut }) => {
             user={userInfo}
             onSignOut={handleSignOut}
             searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
+            onSearchChange={onSearchChange}
             viewMode={viewMode}
             setViewMode={setViewMode}
             onAddUser={() => {
@@ -143,7 +240,7 @@ const Dashboard = ({ userInfo, onSignOut }) => {
             }}
           />
 
-          <StatsSection users={users} />
+          <StatsSection users={allUsers} />
 
           {loading && (
             <div className="mt-8 text-center">
@@ -156,20 +253,39 @@ const Dashboard = ({ userInfo, onSignOut }) => {
               <p className="text-gray-500 text-lg">No users found. Add a new user to get started!</p>
             </div>
           ) : !loading && viewMode === 'grid' ? (
-            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredUsers.map(user => (
-                <UserCard 
-                  key={user.id} 
-                  user={user} 
-                  onEdit={() => {
-                    setEditingUser(user);
-                    setIsModalOpen(true);
-                  }} 
-                  onDelete={() => deleteUser(user.id)}
-                  onViewDetails={() => viewUserDetails(user)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredUsers.map(user => (
+                  <UserCard 
+                    key={user.id} 
+                    user={user} 
+                    onEdit={() => {
+                      setEditingUser(user);
+                      setIsModalOpen(true);
+                    }} 
+                    onDelete={() => deleteUser(user.id)}
+                    onViewDetails={() => viewUserDetails(user)}
+                  />
+                ))}
+              </div>
+              <div className="mt-6 flex items-center justify-center space-x-3">
+                <button
+                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                  disabled={page <= 1}
+                  className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 "
+                >
+                  Prev
+                </button>
+                <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+                <button
+                  onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={page >= totalPages}
+                  className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                >
+                  Next
+                </button>
+              </div>
+            </>
           ) : !loading ? (
             <div className="mt-8 bg-white/80 backdrop-blur-sm overflow-hidden shadow-lg rounded-2xl border border-white/20">
               <ul className="divide-y divide-gray-200">

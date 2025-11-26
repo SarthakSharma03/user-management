@@ -6,11 +6,15 @@ const DashboardHeader = ({
   user,
   onSignOut,
   searchTerm,
-  setSearchTerm,
+  onSearchChange,
   viewMode,
   setViewMode,
   onAddUser,
 }) => {
+  const handleSearchChange = (e) => {
+    onSearchChange(e.target.value);
+  };
+
   return (
     <header className="bg-white/80 backdrop-blur-md shadow-xl border-b border-white/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,9 +66,9 @@ const DashboardHeader = ({
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Search users by name, email, or role..."
+              placeholder="Search users by name..."
             />
           </div>
 

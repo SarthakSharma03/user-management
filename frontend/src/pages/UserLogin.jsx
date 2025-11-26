@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { RiUserLine } from "react-icons/ri";
-import Api from "../services/Api";
+import Api from "../services/Api.js";
 
 import FormInput from "../components/shared/FormInput";
 import PageHeader from "../components/shared/PageHeader";
@@ -13,6 +14,7 @@ const UserLogin = ({ onUserLogin, onNavigateToLanding, onNavigateToAdmin }) => {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -103,17 +105,32 @@ const UserLogin = ({ onUserLogin, onNavigateToLanding, onNavigateToAdmin }) => {
                 required
               />
 
-              <FormInput
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                autoComplete="current-password"
-                required
-              />
+              <div className="space-y-1">
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors duration-200 ${errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'}`}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-indigo-600"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-red-600 animate-pulse">{errors.password}</p>
+                )}
+              </div>
             </div>
 
             {errors.general && (

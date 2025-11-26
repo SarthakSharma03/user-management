@@ -1,4 +1,5 @@
 import { readData, writeData } from "./files.js";
+import { encrypt, decrypt } from "./utility/encryptDecrypt.js";
  
 const createRandomId = (length = 8) => {
   const chars = "0123456789";
@@ -60,6 +61,9 @@ export const createUser = (userData) => {
     id, 
     createdAt: new Date().toISOString() 
   };
+  if (newUser.password) {
+    newUser.password = encrypt(newUser.password);
+  }
   
  
   
@@ -77,7 +81,10 @@ export const createUser = (userData) => {
 
 export const getAllUsers = () => {
   const data = readData();
-  return data;
+  // Filter out admin users and remove password field from all users
+  return data
+    .filter(user => user.role !== 'admin')
+    .map(({ password, ...user }) => user);
 };
 
 export const getuserById = (id) => {
@@ -128,6 +135,7 @@ export const updateUser = (id, userData) => {
       }
 
       // Update user data
+      if (userData.password) userData.password = encrypt(userData.password);
       currentData[i] = { ...currentUser, ...userData };
       userFound = true;
       break;
@@ -163,7 +171,7 @@ export const updatePassword = (id, newPassword) => {
 
   for (let i = 0; i < currentData.length; i++) {
     if (currentData[i].id === id) {
-      currentData[i].password = newPassword;
+      currentData[i].password = encrypt(newPassword);
       userFound = true;
       break;
     }
@@ -187,7 +195,8 @@ export const loginUser = (email, password) => {
   for (let i = 0; i < currentData.length; i++) {
     const user = currentData[i];
     if (user.email.toLowerCase() === email.toLowerCase()) {
-      if (user.password === password) {
+      const decryptedPassword = decrypt(user.password);
+      if (decryptedPassword === password) {
         // Return user without password for security
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
@@ -214,7 +223,7 @@ export const updatePasswordByEmail = (email, newPassword) => {
 
   for (let i = 0; i < currentData.length; i++) {
     if (currentData[i].email.toLowerCase() === email.toLowerCase()) {
-      currentData[i].password = newPassword;
+      currentData[i].password = encrypt(newPassword);
       userFound = true;
       break;
     }
@@ -248,31 +257,21 @@ export const loginAdmin = (email, password, name) => {
     throw new Error("email, password, and name are required");
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASS;
-  const adminName = process.env.ADMIN_NAME;
-
-
-  if (!adminEmail || !adminPassword || !adminName) {
-    
-    throw new Error("Admin credentials not configured in environment variables");
-  }
-
-  const emailMatch = email.toLowerCase() === adminEmail.toLowerCase();
-  const passwordMatch = password === adminPassword;
-  const nameMatch = name.toLowerCase() === adminName.toLowerCase();
-
- 
-
-  if (!emailMatch || !passwordMatch || !nameMatch) {
-    throw new Error("Invalid admin credentials");
-  }
-
   const currentData = readData();
   const adminUser = currentData.find((user) => user.role === "admin");
 
   if (!adminUser) {
     throw new Error("Admin user not found in database");
+  }
+
+  // Decrypt and verify password
+  const decryptedPassword = decrypt(adminUser.password);
+  const emailMatch = email.toLowerCase() === adminUser.email.toLowerCase();
+  const passwordMatch = password === decryptedPassword;
+  const nameMatch = name.toLowerCase() === adminUser.name.toLowerCase();
+
+  if (!emailMatch || !passwordMatch || !nameMatch) {
+    throw new Error("Invalid admin credentials");
   }
 
   const { password: _, ...adminWithoutPassword } = adminUser;

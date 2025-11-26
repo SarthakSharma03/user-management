@@ -115,3 +115,7 @@ POST      /api/user/login              → Login
 
 GET       /api/user/{id}          → get  user’s details  
 POST      /api/user/login         → Login
+
+## user search 
+
+GET    /api/user/{name}          → get specific user card 

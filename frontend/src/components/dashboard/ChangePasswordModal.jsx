@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import Api from "../../services/Api";
+import Api from "../../services/Api.js";
 const ChangePasswordModal = ({
   isOpen,
   onClose,

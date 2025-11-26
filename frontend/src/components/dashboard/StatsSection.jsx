@@ -2,7 +2,7 @@ import { FaUsers } from "react-icons/fa";
 import { MdAdminPanelSettings } from "react-icons/md";
 import { GrUserManager } from "react-icons/gr";
 
-const StatsSection = ({ users }) => {
+const StatsSection = ({ users = [] }) => {
   return (
     <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
       <div className="bg-white/80 backdrop-blur-sm overflow-hidden shadow-2xl rounded-2xl border border-white/20 group hover:scale-105 transition-all duration-300">

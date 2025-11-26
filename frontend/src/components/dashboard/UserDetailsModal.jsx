@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RxCross1 } from "react-icons/rx";
 import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaPhone, FaBuilding, FaKey, FaCalendar } from 'react-icons/fa';
-import Api from '../../services/Api';
+import Api from '../../services/Api.js';
 
 const formatDate = (dateValue) => {
   if (!dateValue) {

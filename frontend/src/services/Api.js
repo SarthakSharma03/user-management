@@ -9,7 +9,10 @@ const handleResponse = async (response) => {
       errorMessage = data.error || data.message || errorMessage;
     } catch (e) {
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+       console.log("error log APIJS : ",e)
     }
+;
+    
     throw new Error(errorMessage);
   }
   
@@ -17,6 +20,7 @@ const handleResponse = async (response) => {
     const data = await response.json();
     return data;
   } catch (e) {
+    console.log("error log APIJS : ",e) 
     throw new Error("Failed to parse response");
   }
 };
@@ -75,6 +79,24 @@ const Api = {
     }
   },
 
+  // Get users with pagination
+  getUsersPaginated: async (page = 1, limit = 3) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return handleResponse(response);
+    } catch (error) {
+      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+        throw new Error("Cannot connect to server. Please make sure the backend is running on port 3000.");
+      }
+      throw error;
+    }
+  },
+
   // Get user by ID
   getUserById: async (id) => {
     const response = await fetch(`${API_BASE_URL}/user/${id}`, {
@@ -85,6 +107,27 @@ const Api = {
     });
     return handleResponse(response);
   },
+    
+  getUserByName: async (name = '', page = 1, limit = 3) => { 
+    try {
+      const qs = new URLSearchParams();
+      if (name !== undefined && name !== null) qs.set('name', name);
+      qs.set('page', String(page));
+      qs.set('limit', String(limit));
+      const response = await fetch(`${API_BASE_URL}/user/search?${qs.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return handleResponse(response);
+    } catch (error) {
+      console.log("log error  : ",error);
+      
+    } 
+    
+  },
+  
 
   // Get user details (for user role - /my/{id})
   getUserDetails: async (id) => {

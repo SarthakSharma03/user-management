@@ -6,7 +6,7 @@ import { formatUserInfo } from "../utils/dashboard";
 import FormInput from "../components/shared/FormInput";
 import PageHeader from "../components/shared/PageHeader";
 import SubmitButton from "../components/shared/SubmitButton";
-import Api from "../services/Api";
+import Api from "../services/Api.js";
 
 const SignIn = ({ onSignIn, onNavigateToLanding }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,28 +31,34 @@ const SignIn = ({ onSignIn, onNavigateToLanding }) => {
       try {
         // Call backend API for admin login
         const response = await Api.adminLogin(data.email, data.password, data.name);
-        const adminUser = response.data;
+        
+        if (!response.success) {
+          throw new Error(response.message || "Admin login failed. Please check your credentials.");
+        }
 
+        const adminUser = response.data;
         if (!adminUser) {
-          alert("Admin login failed. Please check your credentials.");
-          throw new Error("Admin login failed");
+          throw new Error("Admin user data not found in response");
         }
 
         const userInfo = formatUserInfo(adminUser);
-
-        alert(`Welcome back, ${userInfo.name}!`);
+        alert(`Welcome back, ${userInfo.name || 'Admin'}!`);
         
-        onSignIn(userInfo);
+        if (onSignIn) {
+          onSignIn(userInfo);
+        } else {
+          console.warn("onSignIn callback is not provided");
+        }
       } catch (error) {
         console.error("Sign in error:", error);
-        const errorMessage = error.message || "Failed to sign in. Please try again.";
+        const errorMessage = error.message || "Failed to sign in. Please check your credentials and try again.";
         alert(errorMessage);
         throw error;
       }
     });
 
     if (!success) {
-      alert("Please check your information and try again.");
+      console.log("Form validation failed");
     }
   };
 
