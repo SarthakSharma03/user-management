@@ -1,5 +1,20 @@
 const API_BASE_URL = "http://localhost:3000/api";
 
+const getToken = () => {
+  try {
+    return localStorage.getItem('auth_token') || '';
+  } catch {
+    return '';
+  }
+};
+
+const authHeaders = () => {
+  const token = getToken();
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+};
+
 const handleResponse = async (response) => {
   // Check if response is ok
   if (!response.ok) {
@@ -31,9 +46,7 @@ const Api = {
     try {
       const response = await fetch(`${API_BASE_URL}/admin/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: authHeaders(),
         body: JSON.stringify({ email, password, name }),
       });
       return handleResponse(response);
@@ -53,9 +66,7 @@ const Api = {
     }
     const response = await fetch(`${API_BASE_URL}/user/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
       body: JSON.stringify(body),
     });
     return handleResponse(response);
@@ -66,9 +77,7 @@ const Api = {
     try {
       const response = await fetch(`${API_BASE_URL}/users`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: authHeaders(),
       });
       return handleResponse(response);
     } catch (error) {
@@ -79,31 +88,14 @@ const Api = {
     }
   },
 
-  // Get users with pagination
-  getUsersPaginated: async (page = 1, limit = 3) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return handleResponse(response);
-    } catch (error) {
-      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-        throw new Error("Cannot connect to server. Please make sure the backend is running on port 3000.");
-      }
-      throw error;
-    }
-  },
+
+ 
 
   // Get user by ID
   getUserById: async (id) => {
     const response = await fetch(`${API_BASE_URL}/user/${id}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
     });
     return handleResponse(response);
   },
@@ -116,9 +108,7 @@ const Api = {
       qs.set('limit', String(limit));
       const response = await fetch(`${API_BASE_URL}/user/search?${qs.toString()}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
     });
     return handleResponse(response);
     } catch (error) {
@@ -133,9 +123,7 @@ const Api = {
   getUserDetails: async (id) => {
     const response = await fetch(`${API_BASE_URL}/user/my/${id}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
     });
     return handleResponse(response);
   },
@@ -144,9 +132,7 @@ const Api = {
   createUser: async (userData) => {
     const response = await fetch(`${API_BASE_URL}/user`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
       body: JSON.stringify(userData),
     });
     return handleResponse(response);
@@ -156,9 +142,7 @@ const Api = {
   updateUser: async (id, userData) => {
     const response = await fetch(`${API_BASE_URL}/user/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
       body: JSON.stringify(userData),
     });
     return handleResponse(response);
@@ -168,9 +152,7 @@ const Api = {
   deleteUser: async (id) => {
     const response = await fetch(`${API_BASE_URL}/user/${id}`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
     });
     return handleResponse(response);
   },
@@ -179,39 +161,32 @@ const Api = {
   updatePassword: async (id, password) => {
     const response = await fetch(`${API_BASE_URL}/user/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
       body: JSON.stringify({ password }),
     });
     return handleResponse(response);
   },
 
   // Update password by email (helper for ChangePasswordModal)
-  updatePasswordByEmail: async (email, currentPassword, newPassword) => {
-    try {
-      // Verify current password by attempting login
-      try {
-        await Api.login(email, currentPassword);
-      } catch (error) {
-        throw new Error("Current password is incorrect");
-      }
+ updatePasswordByEmail: async (email, currentPassword, newPassword) => {
+  try {
+    await Api.login(email, currentPassword);
+    const usersResponse = await Api.getAllUsers();
+    const users = usersResponse.data || [];
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-      // Get all users and find by email to get ID
-      const usersResponse = await Api.getAllUsers();
-      const users = usersResponse.data || [];
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      
-      if (!user || !user.id) {
-        throw new Error("User not found");
-      }
-
-      // Update password using ID
-      return await Api.updatePassword(user.id, newPassword);
-    } catch (error) {
-      throw error;
+    if (!user || !user.id) {
+      throw new Error("User not found");
     }
-  },
+    return await Api.updatePassword(user.id, newPassword);
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      throw new Error("Current password is incorrect");
+    }
+  
+    throw new Error(error.message || "Failed to update password");
+  }
+},
 
  
   getPasswordById: async (id) => {
@@ -220,9 +195,7 @@ const Api = {
     }
     const response = await fetch(`${API_BASE_URL}/users/${id}/password`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: authHeaders(),
     });
     return handleResponse(response);
   },

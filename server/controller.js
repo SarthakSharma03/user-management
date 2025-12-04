@@ -1,12 +1,11 @@
 import { jsonResponse } from "./utility/jsonResponse.js";
 import { createUser, getAllUsers,getuserById,updateUser,deleteUser,updatePassword,loginUser,updatePasswordByEmail,getUserByEmail,loginAdmin } from "./manageUsers.js";
 import { extractData } from "./utility/extractData.js";
-import { decrypt } from "./utility/encryptDecrypt.js";
+import { generateToken, verifyToken} from "./utility/token.js"
+
 
  
  // ADMIN LOGIN
-
-
 export const adminLogin = async (req, res) => {
   try {
     const dataFromReq = await extractData(req);
@@ -16,21 +15,23 @@ export const adminLogin = async (req, res) => {
       return jsonResponse(res, { 
         message: "Email, password, and name are required",
         success: false 
-      }, 400);
+      });
     }
     
     const admin = await loginAdmin(email, password, name);
-    return jsonResponse(res, { 
-      message: "Admin login successful", 
+    const token = generateToken({ email: admin.email, id: admin.id });
+    return jsonResponse(res, {
+      message: "Admin login successful",
       data: admin,
-      success: true 
+      success: true,
+      token
     });
   } catch (error) {
     console.error("Admin login error:", error);
     return jsonResponse(res, { 
       message: error.message || "Admin login failed",
       success: false 
-    }, 401);
+    });
   }
 }
 
@@ -39,14 +40,16 @@ export const userLogin = async (req,res)=>{
     try {
           const dataFromReq = await extractData(req);
           const {email,password}=dataFromReq
+          console.log(dataFromReq , "data of email and password")
           if(!email || !password){
             return jsonResponse(res, { message: "email and password are required" });
           }
           
           const user = loginUser(email,password)
-          return jsonResponse(res, { message: "login successful", data:user });
+          const token = generateToken({ email: user.email, id: user.id })
+          return jsonResponse(res, { message: "login successful", data: user, token });
         } catch (error) {
-          return jsonResponse(res, { message: "login failed", error:error.message });
+          return jsonResponse(res, { message: "login failed user", error:error.message });
         }
 }
 
@@ -54,15 +57,16 @@ export const userLogin = async (req,res)=>{
 export const userCreate = async (req,res)=>{
      try {
           const dataFromReq = await extractData(req);
-          createUser(dataFromReq);
-          return jsonResponse(res, { message: "User created successfully", data: dataFromReq }, 201);
+          await createUser(dataFromReq);
+          return jsonResponse(res, { message: "User created successfully", data: dataFromReq });
         } catch (error) {
-          return jsonResponse(res, { message: "Error creating user", error: error.message }, 400);
+          return jsonResponse(res, { message: "Error creating user", error: error.message });
         }
 }
 
 // GET ALL USER 
 export const getAllUser = (req, res) => {
+  verifyToken(req)
   const reqUrl = req.url;
   const [_, queryString = ""] = reqUrl.split("?");
   const queryParams = {};
@@ -92,35 +96,8 @@ export const getAllUser = (req, res) => {
 }
 
 //GET USER PASSWORD BY ID 
-export const getUserPasswordbyId =(req,res)=>{
-      const method = req.method;
-  const reqUrl = req.url;
-     const segments = reqUrl.split("/").filter(Boolean);
-        const isPasswordRoute = segments.length === 4 && segments[3] === "password";
-        
-        if (isPasswordRoute) {
-          const idValue = segments[2];
-          try {
-            const user = getuserById(idValue);
-            let plainPassword = decrypt(user.password || "");
-            if (!plainPassword) {
-              const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{};:,.<>/?";
-              let generated = "";
-              for (let i = 0; i < 12; i++) {
-                const idx = Math.floor(Math.random() * charset.length);
-                generated += charset[idx];
-              }
-              const updatedUser = updatePassword(idValue, generated);
-              plainPassword = generated;
-            }
-            return jsonResponse(res, { 
-              message: "user password retrieved successfully",
-              data: { password: plainPassword }
-            });
-          } catch (error) {
-            return jsonResponse(res,{message:"failed to fetch password",error :error.message })
-          }
-        }
+export const getUserPasswordbyId = (req, res) => {
+  return jsonResponse(res, { message: "password viewing endpoint disabled" }, 404);
 }
 
 // SPECIFIC USER BY ROUTE
@@ -137,16 +114,13 @@ export const specificUser = async (req, res) => {
     if (method === "GET") {
      try {
        const user =  getuserById(idValue)
-      // Return user without password for security
       const {password,...userWithoutPassword}=user
        return jsonResponse(res, {
-         message: `user retrived sucesfully`, data :userWithoutPassword 
+         message: `user retrived sucesfully`, data :{...userWithoutPassword, passwordSet: !!password, hasPassword: !!password}
        });
-      
      } catch (error) {
        return jsonResponse(res,{message:"user is not found " ,error :error.message })
      } 
-     
     }
 
     if (method === "PUT") {
@@ -263,19 +237,16 @@ export const specificUser = async (req, res) => {
 
 //  GET SPECIFIC USER DETAILS
 export const userDetails =(req,res)=>{
-      const method = req.method;
-  const reqUrl = req.url;
-     const Id = reqUrl.split("/");
-        const idValue = Id[Id.length - 1];
-        try {
-          const user = getuserById(idValue)
-          // Return user without password for security
-          const {password,...userWithoutPassword}=user
-          return jsonResponse(res, { 
-            message: "user retrieved successfully", 
-            data:userWithoutPassword 
-          });
-        } catch (error) {
-          return jsonResponse(res,{message:"user is not found",error :error.message })
-        }
-} 
+  try {
+    const { email } = req.user || {};
+    if (!email) {
+      return jsonResponse(res, { message: "email not found in token" }, 401);
+    }
+    const user = getUserByEmail(email);
+    const { password, ...userWithoutPassword } = user;
+    return jsonResponse(res, { message: "user retrieved successfully", data: { ...userWithoutPassword, passwordSet: !!password, hasPassword: !!password } });
+  } catch (error) {
+    return jsonResponse(res, { message: "user is not found", error: error.message });
+  }
+}
+

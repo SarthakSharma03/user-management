@@ -1,20 +1,16 @@
-import http from "http";
+import http from "node:http";
 import { jsonResponse } from "./utility/jsonResponse.js";
-import { initializeDataFile, readData, initialiseAdmin } from "./files.js";
-import { createUser, getAllUsers,getuserById,updateUser,deleteUser,updatePassword,loginUser,updatePasswordByEmail,getUserByEmail,loginAdmin } from "./manageUsers.js";
+import { initializeDataFile, initialiseAdmin } from "./files.js";
 import dotenv from 'dotenv';
-import { adminLogin, getUserPasswordbyId, specificUser, userCreate, userDetails, userLogin,getAllUser } from "./controller.js";
+import { adminLogin, specificUser, userCreate, userDetails, userLogin,getAllUser } from "./controller.js";
+import { verifyToken } from "./utility/token.js";
 dotenv.config();
-
-
 initializeDataFile()
-
 initialiseAdmin()
-
-
 const PORT = process.env['PORT'] 
 console.log(PORT , 'port ')
 const server = http.createServer(async (req, res) => {
+  try {
   const origin = req.headers.origin;
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -22,8 +18,6 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-
- 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
@@ -41,42 +35,48 @@ const server = http.createServer(async (req, res) => {
 
   // ADMIN LOGIN
   if (reqUrl === "/api/admin/login" && method === "POST") {
-  return adminLogin(req,res)
+    return adminLogin(req,res)
   }
 
   // LOGIN (only for regular users)
   if (reqUrl === "/api/user/login" && method === "POST") {
-   return userLogin(req,res)
+    return userLogin(req,res)
   }
 
   // CREATE USER
   if (reqUrl === "/api/user" && method === "POST") {
-   return userCreate(req,res)
+    try { verifyToken(req,res); } catch (e) { return jsonResponse(res,{message:"unauthorized"},401); }
+    return userCreate(req,res)
   }
 
-  // GET USER PASSWORD BY ID  
-  if (reqUrl.startsWith("/api/users/") && method === "GET") {
-   return getUserPasswordbyId(req,res)
-  }
 
   if (reqUrl.startsWith("/api/users") && method === "GET") {
-   return getAllUser(req,res)
+    try { verifyToken(req,res); } catch (e) { return jsonResponse(res,{message:"unauthorized"},401); }
+    return getAllUser(req,res)
+  }
+
+  // USER BY /MY/ should come before the generic /api/user/ route
+  if (reqUrl.startsWith("/api/user/my/") && method === "GET") {
+    try {
+      const decodedUser = verifyToken(req,res);
+      req.user = decodedUser;
+    } catch (e) { return jsonResponse(res,{message:"unauthorized"}); }
+    return userDetails(req,res)
   }
 
   // SPECIFIC USER ROUTES (GET, PUT, DELETE, PATCH)
   if (reqUrl.startsWith("/api/user/")) {
-   return specificUser(req,res)
-  }
-
-  // USER BY /MY/
-  if (reqUrl.startsWith("/api/user/my/") && method === "GET") {
-    return userDetails(req,res)
+    try { const decoded = verifyToken(req,res); req.user = decoded; } catch (e) { return jsonResponse(res,{message:"unauthorized"},401); }
+    return specificUser(req,res)
   }
  
   // DEFAULT RESPONSE
   return jsonResponse(res, { message: "route not found" });
+   } catch (error) {
+    console.error("Request handling error:", error);
+    return jsonResponse(res, { message: error.message || "Internal Server Error" });
+  } 
 });
-
 server.listen(PORT, () => {
   console.log("Server started on PORT:", PORT);
 });

@@ -50,7 +50,6 @@ const Dashboard = ({ userInfo, onSignOut }) => {
       const usersData = response.data || [];
       const pagination = response.pagination || { totalPages: 1 };
       setTotalPages(pagination.totalPages || 1);
-      // Keep allUsers as the full list for stats; fetch once separately
       setUsers(usersData);
       const params = new URLSearchParams(window.location.search);
       params.set('page', String(currentPage));
@@ -60,7 +59,6 @@ const Dashboard = ({ userInfo, onSignOut }) => {
       console.error('Error loading users:', error);
       const errorMessage = error.message || 'Failed to load users. Please try again.';
       alert(errorMessage);
-      // If it's a connection error, show helpful message
       if (errorMessage.includes("Cannot connect to server")) {
         console.error("Backend server might not be running. Start it with: cd server && npm start");
       }
@@ -70,7 +68,6 @@ const Dashboard = ({ userInfo, onSignOut }) => {
   };
 
   const handleSearch = async (term) => {
-    // Reset to page 1 on new search
     setPage(1);
     
     setLoading(true);
@@ -84,8 +81,8 @@ const Dashboard = ({ userInfo, onSignOut }) => {
       window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
     } catch (error) {
       console.error('Error searching users:', error);
-      // Don't show error for empty results, just set empty array
-      if (!error.response || error.response.status !== 404) {
+    
+      if (!error.response ) {
         alert('Error searching users. Please try again.');
       } else {
         setUsers([]);
@@ -95,11 +92,12 @@ const Dashboard = ({ userInfo, onSignOut }) => {
     }
   };
 
-  // Handle search term changes with debounce
+  //  debouncing 
   
     const onSearchChange =(newSearchTerm)=>{
       setSearchTerm(newSearchTerm);
     
+
     if(searchTimeout){
       clearTimeout(searchTimeout);
     }
@@ -268,23 +266,6 @@ const Dashboard = ({ userInfo, onSignOut }) => {
                   />
                 ))}
               </div>
-              <div className="mt-6 flex items-center justify-center space-x-3">
-                <button
-                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                  disabled={page <= 1}
-                  className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 "
-                >
-                  Prev
-                </button>
-                <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
-                <button
-                  onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={page >= totalPages}
-                  className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                >
-                  Next
-                </button>
-              </div>
             </>
           ) : !loading ? (
             <div className="mt-8 bg-white/80 backdrop-blur-sm overflow-hidden shadow-lg rounded-2xl border border-white/20">
@@ -303,10 +284,27 @@ const Dashboard = ({ userInfo, onSignOut }) => {
                 ))}
               </ul>
             </div>
+            
+            
           ) : null}
-
-
-        </div>
+           <div className="mt-6 flex items-center justify-center space-x-3">
+                <button
+                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                  disabled={page <= 1}
+                  className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 "
+                >
+                  Prev
+                </button>
+                <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+                <button
+                  onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={page >= totalPages}
+                  className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                >
+                  Next
+                </button>
+              </div>
+        </div>    
       </div>
 
       {isModalOpen && (

@@ -44,6 +44,11 @@ export const initializeDataFile = () => {
 export const initialiseAdmin = ()=>{
 
 try {
+    const existing = readData();
+    const hasAdmin = existing.some(u => u.role === 'admin');
+    if (hasAdmin) {
+      return;
+    }
      const admin = {
       id:1,
       name:process.env.ADMIN_NAME,
@@ -53,7 +58,10 @@ try {
       role: 'admin',
      
     };
-  createUser(admin);
+  createUser(admin).catch((e)=>{
+      console.log("initalise admin error : ",e);
+      
+  });
 } catch (error) {
    console.log(`${error.message} (Admin already exists)`) 
 }

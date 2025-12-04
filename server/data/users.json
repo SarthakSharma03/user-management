@@ -1,71 +1,41 @@
 [
   {
-    "id": "EMP-98791628-LM",
+    "id": "EMP-43669251-LM",
     "name": "admin",
     "phone": "1234567890",
     "email": "admin@gmail.com",
-    "password": "admin123",
+    "password": "$2b$05$jO3qsOodox5j2gZI.4rC3OQ5pOtW0QmMZwWrtoKNeHgeL3EI.pMd2",
     "role": "admin",
-    "createdAt": "2025-11-21T05:31:36.752Z"
+    "createdAt": "2025-11-30T20:45:41.193Z"
   },
   {
-    "name": "harsh",
-    "email": "sarthak0624@gmail.com",
-    "role": "manager",
-    "phone": "1234567891",
-    "department": " senior developer",
-    "password": "Lh7P1!EJXWv>",
-    "id": "EMP-61999878-LM",
-    "createdAt": "2025-11-21T05:47:13.359Z"
-  },
-  {
-    "name": "sarthak",
-    "email": "sarthaksharma0624@gmail.com",
-    "role": "user",
-    "phone": "9039094521",
-    "department": " junior developer",
-    "password": ":C$OnFa-Jr#2",
-    "id": "EMP-78677320-LM",
-    "createdAt": "2025-11-21T10:39:12.247Z"
-  },
-  {
-    "name": "Vishal",
-    "email": "jainv7629@gmail.com",
-    "role": "user",
-    "phone": "9876543211",
-    "department": " senior developer",
-    "password": "Blm=fm{puT@*",
-    "id": "EMP-40327589-LM",
-    "createdAt": "2025-11-24T06:30:51.704Z"
-  },
-  {
-    "name": "swayam",
-    "email": "swayam123@gmail.com",
-    "role": "user",
-    "phone": "1234567898",
-    "department": " senior developer",
-    "password": "enc:w47CqcKnwqDCosOewonCqnXCisKzdg==",
-    "id": "EMP-47214067-LM",
-    "createdAt": "2025-11-25T10:18:10.137Z"
-  },
-  {
-    "name": "bhumi",
+    "name": "sarthak ",
     "email": "bhumi@gmail.com",
     "role": "user",
-    "phone": "7418529632",
-    "department": "developer",
-    "password": "enc:w4bDqMK6w5TCmsOiwq3DqHHCrsO0wqI=",
-    "id": "EMP-10657360-LM",
-    "createdAt": "2025-11-25T10:44:10.280Z"
+    "phone": "7418529633",
+    "department": "sales",
+    "password": "$2b$05$Juo/lmCb8fKtWcvMGKFC4eF7fKq9YC8hKGStxBtzxFMWChcQkYkR.",
+    "id": "EMP-46783324-LM",
+    "createdAt": "2025-11-30T20:46:41.083Z"
   },
   {
-    "name": "SHBDCKJAS",
-    "email": "sarthak04@gmail.com",
+    "name": "xyz",
+    "email": "xyz@gmail.com",
     "role": "manager",
-    "phone": "9876543210",
-    "department": "JKLANHSJLCN",
-    "password": "enc:w47Dp8ODw4PCusOFw4TCnMKNwqnDrcKr",
-    "id": "EMP-68010176-LM",
-    "createdAt": "2025-11-25T11:13:30.097Z"
+    "phone": "7418529644",
+    "department": "sales",
+    "password": "$2b$05$PRlojKSQmxeGol4YxJLt8uI1FvoZfNyA/hjHmDQ2.qASSZdleC.Wy",
+    "id": "EMP-88054300-LM",
+    "createdAt": "2025-12-01T05:31:05.445Z"
+  },
+  {
+    "name": "qwer",
+    "email": "qwer@gmail.com",
+    "role": "user",
+    "phone": "7894561236",
+    "department": "sales",
+    "password": "$2b$05$LSgtSAiuWg3QIlZ/poXbe.ABSmc3kigWqKyVeyblVU3QqemrpuFn2",
+    "id": "EMP-19192260-LM",
+    "createdAt": "2025-12-01T05:33:16.149Z"
   }
 ]

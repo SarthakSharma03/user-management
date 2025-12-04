@@ -1,6 +1,7 @@
 import { readData, writeData } from "./files.js";
-import { encrypt, decrypt } from "./utility/encryptDecrypt.js";
- 
+import { encrypt } from "./utility/encryptDecrypt.js";
+import bcrypt from "bcrypt";
+
 const createRandomId = (length = 8) => {
   const chars = "0123456789";
   let randomPart = "";
@@ -18,7 +19,7 @@ const validateUser = (user) => {
   if (!role || !["user", "admin", "manager"].includes(role))
     errors.push("invalid role ");
   if (phone) {
-    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    const cleanPhone = phone.replace(/[\s\-\(\)]/g, "");
     if (cleanPhone.length !== 10 || !/^\d+$/.test(cleanPhone)) {
       errors.push("phone number must have 10 digits");
     }
@@ -29,24 +30,27 @@ const validateUser = (user) => {
   return errors;
 };
 
-export const createUser = (userData) => {
+export const createUser = async (userData) => {
   const oldData = readData();
- 
-  // if (userData.role === "admin") {
-  //   throw new Error("Admin role cannot be created. Admin is managed separately.");
-  // }
 
   const validationErrors = validateUser(userData);
- 
-  
+
   if (validationErrors.length > 0) {
     throw new Error(validationErrors[0]);
   }
 
-  // Check for duplicate email 
-  const emailExists = oldData.some((user) => 
-    user.email.toLowerCase() === userData.email.toLowerCase()
+  // Check for duplicate email
+  const emailExists = oldData.find(
+    (user) => user.email.toLowerCase() === userData.email.toLowerCase()
   );
+
+  
+  if (userData.role === "admin") {
+    const adminExists = oldData.some((u) => u.role === "admin");
+    if (adminExists) {
+      throw new Error("admin already exists");
+    }
+  }
 
   if (emailExists) {
     throw new Error("User with this email already exists");
@@ -54,26 +58,25 @@ export const createUser = (userData) => {
 
   // Create new user
   const id = createRandomId();
-  const cleanPhone = userData.phone ? userData.phone.replace(/[\s\-\(\)]/g, '') : '';
-  const newUser = { 
+  const cleanPhone = userData.phone
+    ? userData.phone.replace(/[\s\-\(\)]/g, "")
+    : "";
+  const newUser = {
     ...userData,
-    phone: cleanPhone || userData.phone || '',
-    id, 
-    createdAt: new Date().toISOString() 
+    phone: cleanPhone || userData.phone || "",
+    id,
+    createdAt: new Date().toISOString(),
   };
   if (newUser.password) {
-    newUser.password = encrypt(newUser.password);
+    newUser.password =await encrypt(newUser.password);
+    console.log(newUser , "new user")
   }
-  
- 
-  
+
   oldData.push(newUser);
 
-  
   // Write data to file
   try {
     writeData(oldData);
-   
   } catch (error) {
     throw new Error(`Failed to save user: ${error.message}`);
   }
@@ -83,8 +86,8 @@ export const getAllUsers = () => {
   const data = readData();
   // Filter out admin users and remove password field from all users
   return data
-    .filter(user => user.role !== 'admin')
-    .map(({ password, ...user }) => user);
+    .filter((user) => user.role !== "admin")
+    .map(({ password, ...user }) => ({ ...user, passwordSet: !!password, hasPassword: !!password }));
 };
 
 export const getuserById = (id) => {
@@ -104,24 +107,31 @@ export const updateUser = (id, userData) => {
 
   // Prevent changing role to admin
   if (userData.role === "admin") {
-    throw new Error("Admin role cannot be assigned. Admin is managed separately.");
+    throw new Error(
+      "Admin role cannot be assigned. Admin is managed separately."
+    );
   }
 
   for (let i = 0; i < currentData.length; i++) {
     if (currentData[i].id === id) {
       const currentUser = currentData[i];
-      
+
       // Prevent updating admin users
       if (currentUser.role === "admin") {
         throw new Error("Admin users cannot be updated through this function.");
       }
-      
+
       // Check for duplicate email - exclude current user
-      if (userData.email && userData.email.toLowerCase() !== currentUser.email.toLowerCase()) {
-        const emailExists = currentData.some((user) => 
-          user.id !== id && user.email.toLowerCase() === userData.email.toLowerCase()
+      if (
+        userData.email &&
+        userData.email.toLowerCase() !== currentUser.email.toLowerCase()
+      ) {
+        const emailExists = currentData.some(
+          (user) =>
+            user.id !== id &&
+            user.email.toLowerCase() === userData.email.toLowerCase()
         );
-        
+
         if (emailExists) {
           throw new Error("User with this email already exists");
         }
@@ -191,23 +201,23 @@ export const loginUser = (email, password) => {
   }
 
   const currentData = readData();
-
-  for (let i = 0; i < currentData.length; i++) {
-    const user = currentData[i];
-    if (user.email.toLowerCase() === email.toLowerCase()) {
-      const decryptedPassword = decrypt(user.password);
-      if (decryptedPassword === password) {
-        // Return user without password for security
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-      } else {
-        throw new Error("invalid password");
-      }
-    }
+  const user = currentData.find(
+    (u) => u.email.toLowerCase() === email.toLowerCase() && u.role !== "admin"
+  );
+  if (!user) {
+    throw new Error("user not found");
   }
 
-  throw new Error("user not found");
-};
+  const passwordMatch = bcrypt.compareSync(password, user.password);
+  if (!passwordMatch) {
+    throw new Error("invalid credentials");
+  }
+
+  const { password: _, ...userWithoutPassword } = user;
+  return userWithoutPassword;
+
+}
+ ;
 
 export const updatePasswordByEmail = (email, newPassword) => {
   if (!email || !newPassword) {
@@ -265,15 +275,15 @@ export const loginAdmin = (email, password, name) => {
   }
 
   // Decrypt and verify password
-  const decryptedPassword = decrypt(adminUser.password);
-  const emailMatch = email.toLowerCase() === adminUser.email.toLowerCase();
-  const passwordMatch = password === decryptedPassword;
-  const nameMatch = name.toLowerCase() === adminUser.name.toLowerCase();
 
-  if (!emailMatch || !passwordMatch || !nameMatch) {
+  const passwordMatch = bcrypt.compareSync(password, adminUser.password);
+  console.log("password match (correct) :", passwordMatch);
+
+  if (!passwordMatch) {
     throw new Error("Invalid admin credentials");
   }
 
-  const { password: _, ...adminWithoutPassword } = adminUser;
+  const { password:_,...adminWithoutPassword } = adminUser;
   return adminWithoutPassword;
 };
+ 

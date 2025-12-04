@@ -37,6 +37,10 @@ const SignIn = ({ onSignIn, onNavigateToLanding }) => {
         }
 
         const adminUser = response.data;
+        const token = response.token || response.Token;
+        if (token) {
+          try { localStorage.setItem('auth_token', token); } catch {}
+        }
         if (!adminUser) {
           throw new Error("Admin user data not found in response");
         }
