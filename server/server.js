@@ -28,7 +28,7 @@ const server = http.createServer(async (req, res) => {
   const reqUrl = req.url;
 
   const isStartingWithAPI = reqUrl.startsWith("/api");
-
+  console.log(isStartingWithAPI ,'isstartingwithapi-error')
   if (!isStartingWithAPI) {
     return jsonResponse(res, { message: "Unknown Error Occurred" });
   }
