@@ -7,7 +7,7 @@ import { verifyToken } from "./utility/token.js";
 dotenv.config();
 initializeDataFile()
 initialiseAdmin()
-const PORT = process.env['PORT'] 
+const PORT = process.env['PORT'] || 3000
 console.log(PORT , 'port ')
 const server = http.createServer(async (req, res) => {
   try {
