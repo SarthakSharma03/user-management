@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://user-manager-pn3m.onrender.com";
+const API_BASE_URL = "https://user-manager-pn3m.onrender.com/api";
 
 const getToken = () => {
   try {
