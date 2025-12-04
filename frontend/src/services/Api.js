@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://user-management-nklj.vercel.app/";
+const API_BASE_URL = "https://user-manager-pn3m.onrender.com";
 
 const getToken = () => {
   try {
