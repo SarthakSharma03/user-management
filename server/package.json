@@ -6,7 +6,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "node --env-file=.env --watch server.js",
+    "start": "node --env-file=.env  server.js",
     "dev": "node  --env-file=.env --watch server.js"
   },
   "dependencies": {
